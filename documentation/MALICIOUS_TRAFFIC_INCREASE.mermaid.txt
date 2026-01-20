@@ -1,0 +1,69 @@
+flowchart TD
+    %% Main Attack Flow
+    A((DDoS Attack)) --> B[WebUI Service]
+    style A fill:#ffebee,stroke:#b71c1c,stroke-width:2px
+
+    %% WebUI Process
+    subgraph WebUI["WebUI Service - Central Coordinator"]
+        direction TB
+        W1[["Monitor Traffic Patterns
+        (Rate/IP Analysis)"]] --> W2{First Verification}
+        W2 -->|High Benin Load Maybe ?| W3{Second Verification}
+        W3 -->|Suspicious| W4{Third Verification}
+        W4 -->|Attack Confirmed| W5[["Activate Maintenance Mode
+        Deploy Local Circuit Breaker"]]
+        W5 --> W6[[Notify All Services]]
+    end
+
+    %% Service Adaptation Flows
+    subgraph Auth["Auth Service"]
+        direction TB
+        A1[[Receive Notification]] --> A2{First Local Check}
+        A2 -->|High Load / Request rate| A3{Second Local Check}
+        A3 -->|Confirmed| A4[["Activate Circuit Breaker
+        Enable Strict Verification"]]
+    end
+
+    subgraph Recommender["Recommender Service"]
+        direction TB
+        R1[[Receive Notification]] --> R2{First Local Check}
+        R2 -->|High Load / Request rate| R3{Second Local Check}
+        R3 -->|Confirmed| R4[["Activate Circuit Breaker
+        Switch to Low-Power Mode"]]
+    end
+
+    subgraph Persistence["Persistence Service"]
+        direction TB
+        P1[[Receive Notification]] --> P2{First Local Check}
+        P2 -->|High Load / Request rate| P3{Second Local Check}
+        P3 -->|Confirmed| P4[["Activate Circuit Breaker
+        Enable Cache Mode"]]
+    end
+
+    subgraph Image["Image Service"]
+        direction TB
+        I1[[Receive Notification]] --> I2{First Local Check}
+        I2 -->|High Load / Request rate| I3{Second Local Check}
+        I3 -->|Confirmed| I4[["Activate Circuit Breaker
+        Switch to External Provider"]]
+    end
+
+    %% Connections
+    B --> W1
+    W6 -->|REST Notification| Auth
+    W6 -->|REST Notification| Recommender
+    W6 -->|REST Notification| Persistence
+    W6 -->|REST Notification| Image
+
+    %% Styling
+    classDef webui fill:#ffe0b2,stroke:#fb8c00
+    classDef auth fill:#c8e6c9,stroke:#43a047
+    classDef recommender fill#f8bbd0,stroke:#d81b60
+    classDef persistence fill:#b3e5fc,stroke:#039be5
+    classDef image fill:#d1c4e9,stroke:#673ab7
+
+    class WebUI webui
+    class Auth auth
+    class Recommender recommender
+    class Persistence persistence
+    class Image image

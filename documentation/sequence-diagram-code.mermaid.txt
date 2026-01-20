@@ -1,0 +1,30 @@
+sequenceDiagram
+    %% Participants
+    participant OS as Observation Scheduler
+    participant MC as Metrics Collector
+    participant E as Event Manager
+    participant O1 as Observer 1
+    participant O2 as Observer 2
+
+    %% Sequence of interactions
+    OS->>E: Start monitoring events
+
+    par Registration
+        O1->>E: Register for notifications
+        O2->>E: Register for notifications
+    end
+
+    loop Listening
+        OS->>E: tick
+        E->>MC: Collect Metrics
+        MC->>E: Provide metrics
+        E->>+E: Evaluate conditions
+        alt Condition met
+            E->>O1: Notify Observer 1
+            Note right of O1: Executes Adaptation Actions
+            E->>O2: Notify Observer 2
+            Note right of O2: Executes Adaptation Actions
+        else Condition not met
+            Note right of E: Continue monitoring
+        end
+    end

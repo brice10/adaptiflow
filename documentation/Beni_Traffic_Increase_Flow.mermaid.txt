@@ -1,0 +1,51 @@
+flowchart TD
+    %% Main Traffic Flow
+    A[User Traffic Surge] --> B[WebUI Service]
+    style A fill:#f5f5f5,stroke:#666,stroke-width:2px
+
+    %% Recommender Service Adaptation
+    subgraph Recommender["Recommender Service"]
+        direction TB
+        RStart[ ] --> RCollector[[ResourceUsageCollector]]
+        RCollector --> REval{High Resources?}
+        REval -->|Yes| RAction1[["LowPowerMode
+        (Empty Recommendations)"]]
+        REval -->|No| RAction2[["NormalMode
+        (Popular Items)"]]
+    end
+
+    %% Persistence Service Adaptation
+    subgraph Persistence["Persistence Service"]
+        direction TB
+        PStart[ ] --> PCollector[[ResourceUsageCollector]]
+        PCollector --> PEval{High Resources?}
+        PEval -->|Yes| PAction1[["EnableCache"]]
+        PEval -->|No| PAction2[["DisableCache"]]
+    end
+
+    %% Image Service Adaptation
+    subgraph Image["Image Service"]
+        direction TB
+        IStart[ ] --> ICollector[[ResourceUsageCollector]]
+        ICollector --> IEval{High Resources?}
+        IEval -->|Yes| IAction1[["EnableExternalProvider
+        (Fake URLs)"]]
+        IEval -->|No| IAction2[["DisableExternalProvider
+        (Local Images)"]]
+    end
+
+    %% Service Interactions
+    B -->|Increased Load| Recommender
+    B -->|Increased Load| Persistence
+    B -->|Increased Load| Image
+
+    %% Styling
+    classDef webui fill:#e1f5fe,stroke:#039be5
+    classDef recommender fill:#f0f4c3,stroke:#afb42b
+    classDef persistence fill:#c8e6c9,stroke:#43a047
+    classDef image fill:#ffcdd2,stroke:#e53935
+
+    class B webui
+    class Recommender recommender
+    class Persistence persistence
+    class Image image

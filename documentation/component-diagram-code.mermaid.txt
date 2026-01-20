@@ -1,0 +1,24 @@
+flowchart TD
+    %% Define Main Components
+    ES["Observation Scheduler"] -->|Start Observations Scheduling| EM["Event Manager"]
+    EM --> |Collect Metrics| MC["Metrics Collector"] 
+    EM -->|Dual Condition Evaluation| CE["Event Conditional Evaluators"]
+    EM -- Notify --> SUB["Observers (Subscribers)"]
+    SUB -- Execute --> AA["Adaptation Actions"]
+
+    %% Observer Conditional Evaluation
+    SUB -->|Subscribe to Events| EM 
+    EM -->  |Manage| EV["Events"]
+    OCE["Observer Conditional Evaluators"]
+  
+
+
+
+    %% Additional Detail for Conditional Evaluators
+    subgraph CE ["Conditional Evaluators"]
+        ECE["Event Conditional Evaluators"]
+        OCE["Observer Conditional Evaluators"]
+    end
+
+
+    

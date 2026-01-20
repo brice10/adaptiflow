@@ -1,0 +1,47 @@
+flowchart TD
+%% Recommender Service Flow
+    subgraph Recommender["Recommender Service"]
+        ActivateLowPower[[Activate Low Power]]
+        ActivateNormal[[Activate Normal Mode]]
+    end
+
+
+    %% Persistence Service Flow
+    subgraph Persistence["Persistence Service"]
+        direction TB
+        StartDB[(DB Alert)] --> CheckHealth{Check Database Health}
+        CheckHealth -->|Unhealthy| BroadcastUnavailable[[Broadcast Unavailable]]
+        CheckHealth -->|Healthy| BroadcastAvailable[[Broadcast Available]]
+        BroadcastUnavailable --> Timer[5s Timer]
+        Timer --> CheckHealth
+    end
+
+        %% WebUI Service Flow
+    subgraph WebUI["WebUI Service"]
+        EnableMaintenance[[Enable Maintenance]]
+        DisableMaintenance[[Disable Maintenance]]
+    end
+
+
+    %% Administrator Action
+    subgraph Admin["Administrator"]
+        RestartDB[(Restart Database)]
+    end
+
+    %% Event Flows
+    BroadcastUnavailable --> EnableMaintenance
+    BroadcastUnavailable --> ActivateLowPower
+    BroadcastUnavailable --> RestartDB
+    BroadcastAvailable --> DisableMaintenance
+    BroadcastAvailable --> ActivateNormal
+
+    %% Conditional Formatting
+    classDef persistence fill:#f9d5e5,stroke:#c23b22
+    classDef webui fill:#e3e3e3,stroke:#5d5d5d
+    classDef recommender fill:#d5e8d4,stroke:#82b366
+    classDef admin fill:#fff2cc,stroke:#d6b656
+    
+    class Persistence persistence
+    class WebUI webui
+    class Recommender recommender
+    class Admin admin

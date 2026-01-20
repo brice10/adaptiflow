@@ -1,0 +1,128 @@
+@startuml
+
+' Définition des interfaces
+interface Observable<T> {
+    +subscribe(Observer<T> observer)
+    +subscribeAll(List<Observer<T>> observers)
+    +unsubscribe(Observer<T> observer)
+    +unsubscribeAll(List<Observer<T>> observers)
+    +notifyObservers(T metricValue)
+    +notifyObserver(Observer<T> subscriber, T metricValue)
+}
+
+interface Observer<T> {
+    +update(T metricValue, String message)
+    +getConditionEvaluator(): ConditionEvaluator<T>
+}
+
+interface ConditionEvaluator<T> {
+    +test(T metric): boolean
+}
+
+interface ConditionEvaluatorComparableDataType<T extends Comparable<? super T>> extends ConditionEvaluator<T> {
+    +test(T metric): boolean
+}
+
+interface IAdaptationAction {
+    +perform()
+}
+
+interface IMetricsCollector<T> {
+    +get(): T
+}
+
+interface ThresholdProvider<T> {
+    +getThreshold(): T
+}
+
+' Définition des classes
+class Event<T> implements Observable<T> {
+    -List<Observer<T>> subscribers
+    -IMetricsCollector<T> collector
+    +getSubscribers(): List<Observer<T>>
+    +observe()
+}
+
+class ConditionalEvent<T> extends Event<T> {
+    -ConditionEvaluator<T> conditionEvaluator
+}
+
+class IncreaseEvent<T> extends ConditionalEvent<T> {
+    + IncreaseEvent(IMetricsCollector<T> collector, ThresholdProvider<T> thresholdProvider)
+    + notifyObserver(Observer<T> subscriber, T metricValue)
+}
+
+class DecreaseEvent<T> extends ConditionalEvent<T> {
+    + DecreaseEvent(IMetricsCollector<T> collector, ThresholdProvider<T> thresholdProvider)
+    + notifyObserver(Observer<T> subscriber, T metricValue)
+}
+
+abstract class AbstractObservationScheduler {
+    -List<Event> events
+    +start()
+    +stop()
+}
+
+class ContinuousObservationScheduler extends AbstractObservationScheduler {
+    -int interval
+    -ScheduledExecutorService scheduler
+    +start()
+    +stop()
+}
+
+class SingleObservationScheduler extends AbstractObservationScheduler {
+    +start()
+    +stop()
+}
+
+abstract class AbstractEventSubscriber<T> implements Observer<T> {
+    -List<IAdaptationAction> actions
+    -ConditionEvaluator<T> conditionEvaluator
+}
+class EventSubscriber<T> extends AbstractEventSubscriber<T> {
+    + EventSubscriber(List<IAdaptationAction> actions, ConditionEvaluator<T> conditionEvaluator)
+    + EventSubscriber(List<IAdaptationAction> actions)
+    + update(T metricValue, String message)
+}
+
+class EventCounterSubscriber<T> extends AbstractEventSubscriber<T> {
+    -int cycle
+    -int counter
+}
+
+class BetweenEvaluator<T extends Comparable<? super T>> implements ConditionEvaluatorComparableDataType<T> {
+    -T lowerBound
+    -T upperBound
+}
+
+class GreaterThanEvaluator<T extends Comparable<? super T>> implements ConditionEvaluatorComparableDataType<T> {
+    -T bound
+}
+
+class GreaterThanOrEqualEvaluator<T extends Comparable<? super T>> implements ConditionEvaluatorComparableDataType<T> {
+    -T bound
+}
+
+class LessThanEvaluator<T extends Comparable<? super T>> implements ConditionEvaluatorComparableDataType<T> {
+    -T bound
+}
+
+class LessThanOrEqualEvaluator<T extends Comparable<? super T>> implements ConditionEvaluatorComparableDataType<T> {
+    -T bound
+}
+
+class TrueEvaluator<T> implements ConditionEvaluator<T> {
+    + boolean test(T metric)
+}
+
+
+Event --> Observer : manages
+Event --> IMetricsCollector : uses
+IAdaptationAction --> AbstractEventSubscriber : uses
+AbstractEventSubscriber --> ConditionEvaluator : uses
+IncreaseEvent --> ThresholdProvider : uses
+DecreaseEvent --> ThresholdProvider : uses
+ConditionalEvent --> ConditionEvaluator : uses
+AbstractObservationScheduler --> Event : schedules
+
+@enduml

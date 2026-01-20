@@ -1,0 +1,143 @@
+classDiagram
+    %% Définition des interfaces
+    class Observable~T~ {
+        + subscribe(observer: Observer~T~)
+        + subscribeAll(observers: List<Observer~T~>)
+        + unsubscribe(observer: Observer~T~)
+        + unsubscribeAll(observers: List<Observer~T~>)
+        + notifyObservers(metricValue: T)
+        + notifyObserver(subscriber: Observer~T~, metricValue: T)
+    }
+
+    class Observer~T~ {
+        + update(metricValue: T, message: String)
+        + getConditionEvaluator(): ConditionEvaluator~T~
+    }
+
+    class ConditionEvaluator~T~ {
+        + test(metric: T): boolean
+    }
+
+    class IAdaptationAction {
+        + perform()
+    }
+
+    class IMetricsCollector~T~ {
+        + get(): T
+    }
+
+    class ThresholdProvider~T~ {
+        + getThreshold(): T
+    }
+
+    %% Définition des classes
+    class Event~T~ {
+        - subscribers: List<Observer~T~>
+        - collector: IMetricsCollector~T~
+        + getSubscribers(): List<Observer~T~>
+        + observe()
+    }
+
+    class ConditionalEvent~T~ {
+        - conditionEvaluator: ConditionEvaluator~T~
+    }
+
+    class IncreaseEvent~T~ {
+        + IncreaseEvent(collector: IMetricsCollector~T~, thresholdProvider: ThresholdProvider~T~)
+        + notifyObserver(subscriber: Observer~T~, metricValue: T)
+    }
+
+    class AbstractObservationScheduler {
+        - events: List<Event>
+        + start()
+        + stop()
+    }
+
+    class DecreaseEvent~T~ {
+        + DecreaseEvent(collector: IMetricsCollector~T~, thresholdProvider: ThresholdProvider~T~)
+        + notifyObserver(subscriber: Observer~T~, metricValue: T)
+    }
+
+
+
+    class ContinuousObservationScheduler {
+        - interval: int
+        - scheduler: ScheduledExecutorService
+        + start()
+        + stop()
+    }
+
+    class SingleObservationScheduler {
+        + start()
+        + stop()
+    }
+
+    class AbstractEventSubscriber~T~ {
+        - actions: List<IAdaptationAction>
+        - conditionEvaluator: ConditionEvaluator~T~
+    }
+
+    class EventSubscriber~T~ {
+        + EventSubscriber(actions: List<IAdaptationAction>, conditionEvaluator: ConditionEvaluator~T~)
+        + EventSubscriber(actions: List<IAdaptationAction>)
+        + update(metricValue: T, message: String)
+    }
+
+    class EventCounterSubscriber~T~ {
+        - cycle: int
+        - counter: int
+    }
+
+    class BetweenEvaluator~T~ {
+        - lowerBound: T
+        - upperBound: T
+    }
+
+    class GreaterThanEvaluator~T~ {
+        - bound: T
+    }
+
+    class GreaterThanOrEqualEvaluator~T~ {
+        - bound: T
+    }
+
+    class LessThanEvaluator~T~ {
+        - bound: T
+    }
+
+    class LessThanOrEqualEvaluator~T~ {
+        - bound: T
+    }
+
+    class TrueEvaluator~T~ {
+        + test(metric: T): boolean
+    }
+
+    %% Relations entre les classes
+    Event~T~ --> Observer~T~ : "manages"
+    Event~T~ --> IMetricsCollector~T~ : "uses"
+    IAdaptationAction --> AbstractEventSubscriber~T~ : "uses"
+    AbstractEventSubscriber~T~ --> ConditionEvaluator~T~ : "uses"
+    IncreaseEvent~T~ --> ThresholdProvider~T~ : "uses"
+    DecreaseEvent~T~ --> ThresholdProvider~T~ : "uses"
+    ConditionalEvent~T~ --> ConditionEvaluator~T~ : "uses"
+    AbstractObservationScheduler --> Event~T~ : "schedules"
+
+    %% Héritage
+    ConditionalEvent~T~ <|-- Event~T~
+    IncreaseEvent~T~ <|-- ConditionalEvent~T~
+    DecreaseEvent~T~ <|-- ConditionalEvent~T~
+    ContinuousObservationScheduler <|-- AbstractObservationScheduler
+    SingleObservationScheduler <|-- AbstractObservationScheduler
+    EventSubscriber~T~ <|-- AbstractEventSubscriber~T~
+    EventCounterSubscriber~T~ <|-- AbstractEventSubscriber~T~
+
+    %% Implémentation des interfaces
+    Event~T~ ..|> Observable~T~
+    EventSubscriber~T~ ..|> Observer~T~
+    BetweenEvaluator~T~ ..|> ConditionEvaluator~T~
+    GreaterThanEvaluator~T~ ..|> ConditionEvaluator~T~
+    GreaterThanOrEqualEvaluator~T~ ..|> ConditionEvaluator~T~
+    LessThanEvaluator~T~ ..|> ConditionEvaluator~T~
+    LessThanOrEqualEvaluator~T~ ..|> ConditionEvaluator~T~
+    TrueEvaluator~T~ ..|> ConditionEvaluator~T~

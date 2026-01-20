@@ -1,0 +1,71 @@
+flowchart TB
+    %% Define multiple autonomic elements interacting
+    AE1_node[Autonomic Element 1]
+
+    subgraph AE2_sub[Autonomic Element 2]
+      direction TB
+      AM1["Autonomic Manager with Adaptiflow specification"]
+      ME1[Managed Element]
+      AM1 --> ME1
+      ME1 --> AM1
+    end
+
+    subgraph AE3_sub[Autonomic Element 3]
+      direction TB
+      AM2["Autonomic Manager with Adaptiflow specification"]
+      ME2[Managed Element]
+      AM2 --> ME2
+      ME2 --> AM2
+    end
+
+    %% Show interactions between elements
+    AE1_node <--> AE2_sub
+    AE1_node <--> AE3_sub
+
+    %% Zoom into one autonomic element
+    subgraph AE1_node["Autonomic Element 1"]
+        direction TB
+
+        subgraph AM_internal["Autonomic Manager"]
+            ES["Observation Scheduler"]
+            EM["Event Manager"]
+
+            subgraph CE ["Conditional Evaluators"]
+                ECE["Event Conditional Evaluators"]
+                OCE["Observer Conditional Evaluators"]
+            end
+
+            EV["Events"]
+            SUB["Observers (Subscribers)"]
+        end
+
+        subgraph ME_internal[Managed Element]
+            MC["Metric Collectors"]
+            AA["Adaptation Actions"]
+        end
+
+        %% Internal connections
+        ES -->|Start Observations Scheduling| EM
+        EM <--> |Collect Metrics| MC
+        EM -->|Dual Condition Evaluation| CE
+        EM -- Notify --> SUB
+        SUB -- Execute adaptation actions --> AA
+        SUB -->|Subscribe to Events| EM
+        EM --> |Manage| EV
+    end
+
+    %% Style for emphasis - Improved colors for better readability
+    classDef adaptiflow fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000000
+    classDef element fill:#f5f5f5,stroke:#9e9e9e,stroke-width:1.5px,color:#000000
+    classDef internal fill:#ffffff,stroke:#424242,stroke-width:1px,color:#000000
+    classDef managed fill:#ffebee,stroke:#d32f2f,stroke-width:1.5px,color:#000000
+    classDef interfaces fill:#e8f5e8,stroke:#2e7d32,stroke-width:1.5px,color:#000000
+
+    class AM_internal adaptiflow
+    class AM1 adaptiflow
+    class AM2 adaptiflow
+
+    class AE1_node,AE2_sub,AE3_sub element
+    class ME_internal,ME1,ME2 element
+    class ES,EM,ECE,OCE,EV,SUB internal
+    class MC,AA interfaces
