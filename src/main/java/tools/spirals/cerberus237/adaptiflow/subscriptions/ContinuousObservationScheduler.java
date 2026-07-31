@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import tools.spirals.cerberus237.adaptiflow.events.Event;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -167,7 +168,7 @@ public class ContinuousObservationScheduler extends AbstractObservationScheduler
         }
 
         if (events != null && !events.isEmpty()) {
-            builder.append("-");
+            builder.append(" : ");
             for (int i = 0; i < events.size(); i++) {
                 Event event = events.get(i);
                 if (event != null) {
@@ -183,6 +184,7 @@ public class ContinuousObservationScheduler extends AbstractObservationScheduler
             }
         }
 
+        builder.append("-").append(UUID.randomUUID().toString().substring(0, 8));
         return builder.toString();
     }
 
