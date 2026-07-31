@@ -20,6 +20,8 @@ import tools.spirals.cerberus237.adaptiflow.events.Event;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -32,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Arléon Zemtsop (Cerberus)
  */
-public class ContinuousObservationScheduler extends AbstractObservationScheduler {
+public class ContinuousObservationScheduler extends AbstractObservationScheduler implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(ContinuousObservationScheduler.class);
 
     /**
@@ -45,19 +47,36 @@ public class ContinuousObservationScheduler extends AbstractObservationScheduler
      */
     private ScheduledExecutorService scheduler;
 
+    /**
+     * The scheduled task currently tracking the periodic observation loop.
+     */
+    private ScheduledFuture<?> scheduledTask;
+
     private boolean running = false;
 
     /**
-     * Constructs a {@code ContinuousEventScheduler} with the specified list of events
+     * Constructs a {@code ContinuousObservationScheduler} with the specified list of events
      * and an interval for event listening.
      *
      * @param events a list of events to be managed by this scheduler.
      * @param interval the interval in milliseconds for listening to events.
      */
     public ContinuousObservationScheduler(List<Event> events, int interval) {
-        super(events);
+        this(events, interval, null);
+    }
+
+    /**
+     * Constructs a {@code ContinuousObservationScheduler} with the specified list of events,
+     * an interval for event listening, and a descriptive name.
+     *
+     * @param events a list of events to be managed by this scheduler.
+     * @param interval the interval in milliseconds for listening to events.
+     * @param name a descriptive name for this scheduler, or {@code null} when not provided.
+     */
+    public ContinuousObservationScheduler(List<Event> events, int interval, String name) {
+        super(events, name);
         this.interval = interval;
-        this.scheduler = Executors.newSingleThreadScheduledExecutor();
+        this.scheduler = Executors.newSingleThreadScheduledExecutor(createThreadFactory(name, events));
     }
 
     /**
@@ -70,8 +89,28 @@ public class ContinuousObservationScheduler extends AbstractObservationScheduler
      */
     @Override
     public void start() {
-        LOG.info("Start Continuous Event Observations ...");
-        scheduler.scheduleAtFixedRate(() -> events.forEach(Event::observe), interval, interval, TimeUnit.MILLISECONDS);
+        if (running) {
+            return;
+        }
+
+        if (scheduler.isShutdown()) {
+            scheduler = Executors.newSingleThreadScheduledExecutor(createThreadFactory(name, events));
+        }
+
+        LOG.info("[AdaptiFlow] Start Continuous Event Observations ...");
+        scheduledTask = scheduler.scheduleWithFixedDelay(() -> {
+            if (Thread.currentThread().isInterrupted()) {
+                LOG.warn("[AdaptiFlow] Observation thread interrupted; stopping scheduler.");
+                stop();
+                return;
+            }
+
+            try {
+                events.forEach(Event::observe);
+            } catch (RuntimeException e) {
+                LOG.warn("[AdaptiFlow] Error while observing events", e);
+            }
+        }, interval, interval, TimeUnit.MILLISECONDS);
         this.running = true;
     }
 
@@ -83,13 +122,72 @@ public class ContinuousObservationScheduler extends AbstractObservationScheduler
      */
     @Override
     public void stop() {
-        LOG.info("Stop Continuous Event Observations ...");
+        if (!running && scheduledTask == null) {
+            return;
+        }
+
+        LOG.info("[AdaptiFlow] Stop Continuous Event Observations ...");
+        if (scheduledTask != null) {
+            scheduledTask.cancel(false);
+            scheduledTask = null;
+        }
+
         scheduler.shutdownNow();
-        scheduler = Executors.newSingleThreadScheduledExecutor();
+        try {
+            if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                LOG.warn("[AdaptiFlow] Scheduler did not terminate in time.");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOG.warn("[AdaptiFlow] Interrupted while stopping scheduler", e);
+        }
+
+        scheduler = Executors.newSingleThreadScheduledExecutor(createThreadFactory(name, events));
         this.running = false;
     }
 
     public boolean isRunning() {
         return running;
+    }
+
+    private static ThreadFactory createThreadFactory(String schedulerName, List<Event> events) {
+        return runnable -> {
+            Thread thread = new Thread(runnable, buildThreadName(schedulerName, events));
+            thread.setDaemon(true);
+            return thread;
+        };
+    }
+
+    private static String buildThreadName(String schedulerName, List<Event> events) {
+        StringBuilder builder = new StringBuilder();
+        if (schedulerName != null && !schedulerName.isEmpty()) {
+            builder.append(schedulerName);
+        } else {
+            builder.append("ContinuousObservationScheduler");
+        }
+
+        if (events != null && !events.isEmpty()) {
+            builder.append("-");
+            for (int i = 0; i < events.size(); i++) {
+                Event event = events.get(i);
+                if (event != null) {
+                    String eventName = event.getName();
+                    if (eventName == null || eventName.isEmpty()) {
+                        eventName = event.getClass().getSimpleName();
+                    }
+                    builder.append(eventName);
+                    if (i < events.size() - 1) {
+                        builder.append("+");
+                    }
+                }
+            }
+        }
+
+        return builder.toString();
+    }
+
+    @Override
+    public void close() {
+        stop();
     }
 }

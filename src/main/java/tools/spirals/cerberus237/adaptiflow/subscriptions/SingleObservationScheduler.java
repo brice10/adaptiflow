@@ -35,7 +35,17 @@ public class SingleObservationScheduler extends AbstractObservationScheduler {
      * @param events a list of events to be managed by this scheduler.
      */
     public SingleObservationScheduler(List<Event> events) {
-        super(events);
+        this(events, null);
+    }
+
+    /**
+     * Constructs a {@link SingleObservationScheduler} with the specified list of events and name.
+     *
+     * @param events a list of events to be managed by this scheduler.
+     * @param name a descriptive name for this scheduler, or {@code null} when not provided.
+     */
+    public SingleObservationScheduler(List<Event> events, String name) {
+        super(events, name);
     }
 
     /**

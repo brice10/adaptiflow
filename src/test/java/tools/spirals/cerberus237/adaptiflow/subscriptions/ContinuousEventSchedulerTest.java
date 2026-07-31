@@ -99,4 +99,11 @@ public class ContinuousEventSchedulerTest {
         Assert.assertTrue(scheduler.events.contains(event1));
         Assert.assertTrue(scheduler.events.contains(event2));
     }
+
+    @Test
+    public void testConstructorWithNameInitializesName() {
+        ContinuousObservationScheduler namedScheduler = new ContinuousObservationScheduler(events, 100, "continuous-scheduler");
+
+        Assert.assertEquals("continuous-scheduler", namedScheduler.name);
+    }
 }

@@ -83,4 +83,15 @@ public class SingleEventSchedulerTest {
         Assert.assertTrue(scheduler.events.contains(event1));
         Assert.assertTrue(scheduler.events.contains(event2));
     }
+
+    @Test
+    public void testConstructorWithNameInitializesName() {
+        List<Event> namedEvents = new ArrayList<>();
+        namedEvents.add(event1);
+        namedEvents.add(event2);
+
+        SingleObservationScheduler namedScheduler = new SingleObservationScheduler(namedEvents, "single-scheduler");
+
+        Assert.assertEquals("single-scheduler", namedScheduler.name);
+    }
 }

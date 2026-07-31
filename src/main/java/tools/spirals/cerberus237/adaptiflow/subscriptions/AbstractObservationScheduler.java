@@ -36,12 +36,28 @@ public abstract class AbstractObservationScheduler {
     protected final List<Event> events;
 
     /**
-     * Constructs an {@code AbstractEventScheduler} with the specified list of events.
+     * A descriptive name for this scheduler.
+     */
+    protected final String name;
+
+    /**
+     * Constructs an {@code AbstractObservationScheduler} with the specified list of events.
      *
      * @param events a list of events to be managed by this scheduler.
      */
     public AbstractObservationScheduler(List<Event> events) {
+        this(events, "adaptiflow-scheduler");
+    }
+
+    /**
+     * Constructs an {@code AbstractObservationScheduler} with the specified list of events and name.
+     *
+     * @param events a list of events to be managed by this scheduler.
+     * @param name a descriptive name for this scheduler, or {@code null} when not provided.
+     */
+    public AbstractObservationScheduler(List<Event> events, String name) {
         this.events = events;
+        this.name = name;
     }
 
     /**

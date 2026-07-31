@@ -69,6 +69,15 @@ public class Event<T> implements Observable<T> {
     }
 
     /**
+     * Returns the name assigned to this event.
+     *
+     * @return the event name, or {@code null} if no name was assigned.
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
      * Subscribes a single observer to this event.
      * <p>
      * This method adds the specified observer to the list of subscribers
