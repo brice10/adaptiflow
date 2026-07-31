@@ -87,7 +87,7 @@ public class EventCounterSubscriber<T> extends AbstractEventSubscriber<T> {
     public void update(T metricValue, String message) {
         counter++;
         if (counter >= cycle) {
-            LOG.info("{}: {}", message, metricValue);
+            LOG.info("[AdaptiFlow] {}: {}", message, metricValue);
             actions.forEach(IAdaptationAction::perform);
             counter = 0; // Reset the counter after actions are performed
         }

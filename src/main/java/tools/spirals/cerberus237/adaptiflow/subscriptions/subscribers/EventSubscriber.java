@@ -71,7 +71,7 @@ public class EventSubscriber<T> extends AbstractEventSubscriber<T> {
      */
     @Override
     public void update(T metricValue, String message) {
-        LOG.info("{}: {}", message, metricValue);
+        LOG.info("[AdaptiFlow] {}: {}", message, metricValue);
         actions.forEach(IAdaptationAction::perform);
     }
 }
